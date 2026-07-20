@@ -1,0 +1,27 @@
+﻿<svg width="640" height="180" viewBox="0 0 640 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Pay Flow Logo</title>
+  <desc id="desc">Blue Pay Flow P monogram with a green upward arrow.</desc>
+  <defs>
+    <linearGradient id="blue" x1="42" y1="17" x2="184" y2="148" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1FC7F5"/>
+      <stop offset="0.48" stop-color="#2266F3"/>
+      <stop offset="1" stop-color="#0647CC"/>
+    </linearGradient>
+    <linearGradient id="green" x1="39" y1="136" x2="190" y2="71" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00C853"/>
+      <stop offset="0.62" stop-color="#43EE62"/>
+      <stop offset="1" stop-color="#B8F45B"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="250" height="190" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M58 31C58 19.954 66.954 11 78 11H127C174.5 11 207 38.5 207 79.5C207 120 176.5 146 130.5 146H101V122H128C154.5 122 173 105 173 79.5C173 53.5 154 35 127 35H96V146C96 152.075 91.075 157 85 157H70C63.373 157 58 151.627 58 145V31Z" fill="url(#blue)"/>
+    <path d="M93 61H126C137.5 61 146 68.5 146 80C146 91.5 137.5 99 126 99H93V61Z" fill="white" fill-opacity="0.93"/>
+    <path d="M55 116C83 79.5 120 61 165 61H176V43.5C176 38.195 182.184 35.293 186.264 38.681L230.632 75.511C233.649 78.015 233.638 82.647 230.61 85.137L186.242 121.609C182.157 124.967 176 122.06 176 116.773V99H164C121.5 99 84.5 117 51 153C47.532 156.728 41.555 153.602 42.288 148.557C44.21 135.322 48.093 124.454 55 116Z" fill="url(#green)"/>
+  </g>
+  <text x="258" y="88" font-family="Poppins, Inter, Arial, sans-serif" font-size="54" font-weight="800" fill="#1155DE" letter-spacing="0">PAY</text>
+  <text x="381" y="88" font-family="Poppins, Inter, Arial, sans-serif" font-size="54" font-weight="800" fill="#48C83D" letter-spacing="0">FLOW</text>
+  <text x="262" y="122" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600" fill="#64748B" letter-spacing="0">Learn. Invest. Grow.</text>
+</svg>
