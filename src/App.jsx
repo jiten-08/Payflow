@@ -225,6 +225,7 @@ function AddMoneyModal({ wallet, setWallet, orders, setOrders, paymentMethods, s
   const [walletMobile, setWalletMobile] = useState("");
   const [error, setError] = useState("");
   const cleanAmount = Math.floor(Number(amount || 0));
+  const maxTopUpAmount = 1000000;
   const safeAmount = Math.max(0, cleanAmount);
   const convenienceFee = Math.round(safeAmount * .0018);
   const payable = safeAmount + convenienceFee;
@@ -245,6 +246,7 @@ function AddMoneyModal({ wallet, setWallet, orders, setOrders, paymentMethods, s
   };
   const validate = () => {
     if (!Number.isFinite(cleanAmount) || cleanAmount < 100) return "Minimum top-up amount is ₹100.";
+    if (cleanAmount > maxTopUpAmount) return "Top-up above ₹10,00,000 is not allowed.";
     if (method === "UPI" && !/^[\w.-]{2,}@[a-zA-Z]{2,}$/.test(upiId.trim())) return "Enter a valid UPI ID, for example name@upi.";
     if (method === "Card") {
       const digits = cardNumber.replace(/\D/g, "");
