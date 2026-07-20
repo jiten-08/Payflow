@@ -80,7 +80,10 @@ tr:hover td { background: rgba(0,200,83,.04); }
 .up-bg { background: linear-gradient(135deg, #00a847, #00c853); }
 .down-bg { background: linear-gradient(135deg, #c62828, #e53935); }
 .empty { padding: 36px; text-align: center; color: var(--muted); }
-.executed, .chips span { display: inline-flex; padding: 6px 9px; border-radius: 999px; background: rgba(0,200,83,.11); color: var(--green); font-size: .78rem; }
+.status-pill, .executed, .chips span { display: inline-flex; padding: 6px 9px; border-radius: 999px; font-size: .78rem; }
+.status-executed, .status-added, .executed, .chips span { background: rgba(0,200,83,.11); color: var(--green); }
+.status-pending { background: rgba(245,158,11,.14); color: #d97706; }
+.market-note { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px 12px; border: 1px solid rgba(245,158,11,.28); border-radius: 8px; background: rgba(245,158,11,.12); color: #d97706; font-size: .84rem; }
 .settings-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 .overlay { position: fixed; inset: 0; background: rgba(2,6,23,.38); z-index: 50; display: flex; justify-content: flex-end; }
