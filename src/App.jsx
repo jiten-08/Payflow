@@ -214,9 +214,20 @@ function AddMoneyModal({ wallet, setWallet, orders, setOrders, paymentMethods, s
   const [amount, setAmount] = useState(5000);
   const [method, setMethod] = useState("UPI");
   const [newMethod, setNewMethod] = useState("");
-  const cleanAmount = Math.max(100, Math.floor(Number(amount || 0)));
-  const convenienceFee = Math.round(cleanAmount * .0018);
-  const payable = cleanAmount + convenienceFee;
+  const [upiId, setUpiId] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [bank, setBank] = useState("");
+  const [bankUser, setBankUser] = useState("");
+  const [walletProvider, setWalletProvider] = useState(paymentMethods[0] || "UPI");
+  const [walletMobile, setWalletMobile] = useState("");
+  const [error, setError] = useState("");
+  const cleanAmount = Math.floor(Number(amount || 0));
+  const safeAmount = Math.max(0, cleanAmount);
+  const convenienceFee = Math.round(safeAmount * .0018);
+  const payable = safeAmount + convenienceFee;
   const methods = [
     ["UPI", "bi-qr-code", "Pay by any UPI app"],
     ["Card", "bi-credit-card", "Visa, Mastercard, RuPay"],
@@ -225,18 +236,46 @@ function AddMoneyModal({ wallet, setWallet, orders, setOrders, paymentMethods, s
   ];
   const addMethod = () => {
     const value = newMethod.trim();
-    if (!value) return;
+    if (!value) return setError("Enter a wallet or payment app name before saving.");
     if (!paymentMethods.includes(value)) setPaymentMethods([...paymentMethods, value]);
+    setWalletProvider(value);
     setMethod("Wallet");
     setNewMethod("");
+    setError("");
+  };
+  const validate = () => {
+    if (!Number.isFinite(cleanAmount) || cleanAmount < 100) return "Minimum top-up amount is ₹100.";
+    if (method === "UPI" && !/^[\w.-]{2,}@[a-zA-Z]{2,}$/.test(upiId.trim())) return "Enter a valid UPI ID, for example name@upi.";
+    if (method === "Card") {
+      const digits = cardNumber.replace(/\D/g, "");
+      if (digits.length < 12 || digits.length > 19) return "Enter a valid card number.";
+      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardExpiry.trim())) return "Enter expiry in MM/YY format.";
+      if (!/^\d{3,4}$/.test(cardCvv.trim())) return "Enter a valid CVV.";
+      if (cardName.trim().length < 3) return "Enter the cardholder name.";
+    }
+    if (method === "Net Banking") {
+      if (!bank) return "Select your bank.";
+      if (bankUser.trim().length < 4) return "Enter your customer ID or user ID.";
+    }
+    if (method === "Wallet") {
+      if (!walletProvider) return "Select a wallet provider.";
+      if (!/^\d{10}$/.test(walletMobile.trim())) return "Enter a valid 10-digit mobile number linked to the wallet.";
+    }
+    return "";
   };
   const confirm = () => {
+    const message = validate();
+    if (message) {
+      setError(message);
+      return;
+    }
+    setError("");
     setWallet(wallet + cleanAmount);
     setOrders([{ id: crypto.randomUUID(), side: "Wallet Top-up", symbol: method, date: new Date().toLocaleDateString("en-IN"), time: new Date().toLocaleTimeString("en-IN"), price: cleanAmount, qty: 1, status: "Added" }, ...orders]);
     setToast(`Added ${rupee(cleanAmount)} to wallet`);
     onClose();
   };
-  return <div className="overlay checkout-overlay"><section className="checkout-modal"><div className="checkout-brand"><div><span className="checkout-logo">PF</span><div><h2>Pay Flow Checkout</h2><p>Secure demo payment gateway</p></div></div><button className="icon-btn" onClick={onClose}><i className="bi bi-x-lg" /></button></div><div className="checkout-secure"><i className="bi bi-shield-lock" /> 256-bit encrypted simulator checkout. No real money is processed.</div><div className="checkout-grid"><aside className="method-panel"><h3>Payment Method</h3>{methods.map(([name, icon, sub]) => <button key={name} className={method === name ? "method-option active" : "method-option"} onClick={() => setMethod(name)}><i className={`bi ${icon}`} /><span><b>{name}</b><small>{sub}</small></span></button>)}</aside><div className="payment-panel"><div className="amount-box"><label>Amount to add<input type="number" min="100" step="100" value={amount} onChange={e => setAmount(e.target.value)} /></label><div className="quick-amounts checkout-quick">{[1000, 5000, 10000, 25000].map(value => <button key={value} onClick={() => setAmount(value)}>{rupee(value)}</button>)}</div></div>{method === "UPI" && <div className="pay-form"><label>UPI ID<input placeholder="name@upi" /></label><div className="qr-card"><i className="bi bi-qr-code" /><span>Scan & pay preview</span></div></div>}{method === "Card" && <div className="pay-form"><label>Card number<input placeholder="1234 5678 9012 3456" inputMode="numeric" /></label><div className="split"><label>Expiry<input placeholder="MM/YY" /></label><label>CVV<input placeholder="123" inputMode="numeric" /></label></div><label>Name on card<input placeholder="Cardholder name" /></label></div>}{method === "Net Banking" && <div className="pay-form"><label>Select bank<select defaultValue=""><option value="" disabled>Choose your bank</option><option>HDFC Bank</option><option>ICICI Bank</option><option>State Bank of India</option><option>Axis Bank</option><option>Kotak Mahindra Bank</option></select></label></div>}{method === "Wallet" && <div className="pay-form"><label>Saved demo wallet<select>{paymentMethods.map(item => <option key={item}>{item}</option>)}</select></label><div className="method-row"><input value={newMethod} onChange={e => setNewMethod(e.target.value)} placeholder="Add wallet, e.g. PhonePe UPI" /><button className="secondary" onClick={addMethod}>Save</button></div></div>}</div><aside className="summary-panel"><h3>Order Summary</h3><span><small>Merchant</small><b>Pay Flow Simulator</b></span><span><small>Current wallet</small><b>{rupee(wallet)}</b></span><span><small>Top-up amount</small><b>{rupee(cleanAmount)}</b></span><span><small>Gateway fee</small><b>{rupee(convenienceFee)}</b></span><strong><small>Total payable</small><b>{rupee(payable)}</b></strong><button className="pay-now" onClick={confirm}><i className="bi bi-lock-fill" /> Pay {rupee(payable)}</button><p>Funds credited instantly to your demo wallet.</p></aside></div></section></div>;
+  return <div className="overlay checkout-overlay"><section className="checkout-modal"><div className="checkout-brand"><div><span className="checkout-logo">PF</span><div><h2>Pay Flow Checkout</h2><p>Secure demo payment gateway</p></div></div><button className="icon-btn" onClick={onClose}><i className="bi bi-x-lg" /></button></div><div className="checkout-secure"><i className="bi bi-shield-lock" /> 256-bit encrypted simulator checkout. No real money is processed.</div><div className="checkout-grid"><aside className="method-panel"><h3>Payment Method</h3>{methods.map(([name, icon, sub]) => <button key={name} className={method === name ? "method-option active" : "method-option"} onClick={() => { setMethod(name); setError(""); }}><i className={`bi ${icon}`} /><span><b>{name}</b><small>{sub}</small></span></button>)}</aside><div className="payment-panel"><div className="amount-box"><label>Amount to add<input type="number" min="100" step="100" value={amount} onChange={e => setAmount(e.target.value)} /></label><div className="quick-amounts checkout-quick">{[1000, 5000, 10000, 25000].map(value => <button key={value} onClick={() => setAmount(value)}>{rupee(value)}</button>)}</div></div>{error && <div className="payment-error"><i className="bi bi-exclamation-circle" /> {error}</div>}{method === "UPI" && <div className="pay-form"><label>UPI ID<input value={upiId} onChange={e => setUpiId(e.target.value)} placeholder="name@upi" /></label><div className="qr-card"><i className="bi bi-qr-code" /><span>Enter UPI ID or scan preview to continue</span></div></div>}{method === "Card" && <div className="pay-form"><label>Card number<input value={cardNumber} onChange={e => setCardNumber(e.target.value)} placeholder="1234 5678 9012 3456" inputMode="numeric" /></label><div className="split"><label>Expiry<input value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} placeholder="MM/YY" /></label><label>CVV<input value={cardCvv} onChange={e => setCardCvv(e.target.value)} placeholder="123" inputMode="numeric" /></label></div><label>Name on card<input value={cardName} onChange={e => setCardName(e.target.value)} placeholder="Cardholder name" /></label></div>}{method === "Net Banking" && <div className="pay-form"><label>Select bank<select value={bank} onChange={e => setBank(e.target.value)}><option value="" disabled>Choose your bank</option><option>HDFC Bank</option><option>ICICI Bank</option><option>State Bank of India</option><option>Axis Bank</option><option>Kotak Mahindra Bank</option></select></label><label>Customer ID / User ID<input value={bankUser} onChange={e => setBankUser(e.target.value)} placeholder="Enter net banking user ID" /></label></div>}{method === "Wallet" && <div className="pay-form"><label>Saved demo wallet<select value={walletProvider} onChange={e => setWalletProvider(e.target.value)}>{paymentMethods.map(item => <option key={item}>{item}</option>)}</select></label><label>Linked mobile number<input value={walletMobile} onChange={e => setWalletMobile(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="10-digit mobile number" inputMode="numeric" /></label><div className="method-row"><input value={newMethod} onChange={e => setNewMethod(e.target.value)} placeholder="Add wallet, e.g. PhonePe" /><button className="secondary" onClick={addMethod}>Save</button></div></div>}</div><aside className="summary-panel"><h3>Order Summary</h3><span><small>Merchant</small><b>Pay Flow Simulator</b></span><span><small>Current wallet</small><b>{rupee(wallet)}</b></span><span><small>Top-up amount</small><b>{rupee(safeAmount)}</b></span><span><small>Gateway fee</small><b>{rupee(convenienceFee)}</b></span><strong><small>Total payable</small><b>{rupee(payable)}</b></strong><button className="pay-now" onClick={confirm}><i className="bi bi-lock-fill" /> Pay {rupee(payable)}</button><p>Funds credited only after valid demo payment details are entered.</p></aside></div></section></div>;
 }
 function TradeModal({ trade, wallet, setWallet, portfolio, setPortfolio, orders, setOrders, holdings, onClose, setToast }) { const [qty, setQty] = useState(1); const stock = trade.stock, side = trade.side; const base = stock.price * qty; const f = fees(base); const totalFees = f.brokerage + f.gst + f.stt; const total = side === "Buy" ? base + totalFees : base - totalFees; const holding = holdings.find(h => h.symbol === stock.symbol); const confirm = () => { if (side === "Buy") { if (wallet < total) return setToast("Insufficient wallet balance"); const current = portfolio[stock.symbol] || { symbol: stock.symbol, qty: 0, avg: 0, invested: 0 }; const invested = current.invested + base, newQty = current.qty + qty; setPortfolio({ ...portfolio, [stock.symbol]: { symbol: stock.symbol, qty: newQty, avg: invested / newQty, invested } }); setWallet(wallet - total); setToast("Stock Purchased"); } else { if (!holding || holding.qty < qty) return setToast("Sell owned stocks only"); const next = { ...portfolio }; const remain = holding.qty - qty; if (remain <= 0) delete next[stock.symbol]; else next[stock.symbol] = { ...next[stock.symbol], qty: remain, invested: next[stock.symbol].avg * remain }; setPortfolio(next); setWallet(wallet + total); setToast("Stock Sold"); } setOrders([{ id: crypto.randomUUID(), side, symbol: stock.symbol, date: new Date().toLocaleDateString("en-IN"), time: new Date().toLocaleTimeString("en-IN"), price: stock.price, qty, status: "Executed" }, ...orders]); onClose(); }; return <div className="overlay"><section className="trade-modal"><div className="drawer-head"><div><h2>{side} {stock.symbol}</h2><p>{stock.company}</p></div><button className="icon-btn" onClick={onClose}><i className="bi bi-x-lg" /></button></div><label>Quantity<input type="number" min="1" value={qty} onChange={e => setQty(Math.max(1, Math.floor(Number(e.target.value || 1))))} /></label><div className="bill"><span>Price <b>{rupee(stock.price)}</b></span><span>Estimated {side === "Buy" ? "Cost" : "Value"} <b>{rupee(base)}</b></span><span>Brokerage <b>{rupee(f.brokerage)}</b></span><span>GST <b>{rupee(f.gst)}</b></span><span>STT <b>{rupee(f.stt)}</b></span>{side === "Sell" && <span>Profit/Loss <b className={stock.price >= (holding?.avg || 0) ? "up" : "down"}>{rupee(((stock.price - (holding?.avg || 0)) * qty) - totalFees)}</b></span>}<strong>Total <b>{rupee(total)}</b></strong></div><button className={side === "Buy" ? "primary wide" : "danger wide"} onClick={confirm}>Confirm {side}</button></section></div>; }
 
