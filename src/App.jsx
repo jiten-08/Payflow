@@ -47,7 +47,7 @@ function createStocks() {
     const previousClose = +(price * (1 + (index % 7 - 3) / 100)).toFixed(2);
     const history = Array.from({ length: 300 }, (_, i) => +(price + Math.sin((i + index) / 8) * price * .012 + Math.cos(i / 15) * price * .005).toFixed(2));
     const current = history.at(-1);
-    return { symbol, company, sector, price: current, open: +(previousClose * (1 + (index % 5 - 2) / 500)).toFixed(2), previousClose, dayHigh: Math.max(...history.slice(-50)), dayLow: Math.min(...history.slice(-50)), volume, history, change: +(current - previousClose).toFixed(2), changePct: +(((current - previousClose) / previousClose) * 100).toFixed(2), marketCap: `${(price * (index + 28) / 10).toFixed(1)}K Cr`, yearHigh: +(price * 1.18).toFixed(2), yearLow: +(price * .72).toFixed(2), volatility: .00025 + (index % 10) * .00012, volumes: Array.from({ length: 300 }, () => Math.floor(volume / 260 + Math.random() * volume / 220)) };
+    return { symbol, company, sector, price: current, open: +(previousClose * (1 + (index % 5 - 2) / 500)).toFixed(2), previousClose, dayHigh: Math.max(...history.slice(-50)), dayLow: Math.min(...history.slice(-50)), volume, history, change: +(current - previousClose).toFixed(2), changePct: +(((current - previousClose) / previousClose) * 100).toFixed(2), marketCap: `${(price * (index + 28) / 10).toFixed(1)}K Cr`, yearHigh: +(price * 1.18).toFixed(2), yearLow: +(price * .72).toFixed(2), volatility: .00008 + (index % 10) * .00004, volumes: Array.from({ length: 300 }, () => Math.floor(volume / 260 + Math.random() * volume / 220)) };
   });
 }
 
@@ -66,7 +66,7 @@ function nextOpen(now) {
   return next;
 }
 function moveStock(stock) {
-  const spike = Math.random() > .985 ? (Math.random() - .5) * stock.volatility * 10 : 0;
+  const spike = Math.random() > .995 ? (Math.random() - .5) * stock.volatility * 4 : 0;
   const price = Math.max(1, stock.price * (1 + (Math.random() - .5) * stock.volatility * 2 + spike));
   const volumeAdd = Math.floor(Math.random() * stock.volume / 850) + 1;
   const next = { ...stock, price: +price.toFixed(2), volume: stock.volume + volumeAdd };
@@ -109,7 +109,7 @@ function App() {
   }, []);
   useEffect(() => {
     if (!status.isOpen) return;
-    const timer = setInterval(() => setStocks(list => list.map(moveStock)), 150);
+    const timer = setInterval(() => setStocks(list => list.map(moveStock)), 1000);
     return () => clearInterval(timer);
   }, [status.isOpen]);
   useEffect(() => {
@@ -182,7 +182,7 @@ function Market(props) {
   let list = props.stocks.filter(s => (!props.query || `${s.symbol} ${s.company} ${s.sector}`.toLowerCase().includes(props.query.toLowerCase())) && (sector === "All" || s.sector === sector) && (range === "All" || (range === "Under 500" && s.price < 500) || (range === "500-2000" && s.price >= 500 && s.price <= 2000) || (range === "2000+" && s.price > 2000)));
   if (mover === "Top Gainers") list = list.filter(s => s.changePct >= 0).sort((a, b) => b.changePct - a.changePct);
   if (mover === "Top Losers") list = list.filter(s => s.changePct < 0).sort((a, b) => a.changePct - b.changePct);
-  return <><PageTitle title="Market" subtitle="Live simulated prices update independently every 150ms when the market is open." /><Panel><div className="filters"><input value={props.query} onChange={e => props.setQuery(e.target.value)} placeholder="Search stocks" /><select value={sector} onChange={e => setSector(e.target.value)}>{sectors.map(s => <option key={s}>{s}</option>)}</select><select value={mover} onChange={e => setMover(e.target.value)}>{["All", "Top Gainers", "Top Losers"].map(s => <option key={s}>{s}</option>)}</select><select value={range} onChange={e => setRange(e.target.value)}>{["All", "Under 500", "500-2000", "2000+"].map(s => <option key={s}>{s}</option>)}</select></div><StockTable {...props} stocks={list} /></Panel></>;
+  return <><PageTitle title="Market" subtitle="Live simulated prices update gradually when the market is open." /><Panel><div className="filters"><input value={props.query} onChange={e => props.setQuery(e.target.value)} placeholder="Search stocks" /><select value={sector} onChange={e => setSector(e.target.value)}>{sectors.map(s => <option key={s}>{s}</option>)}</select><select value={mover} onChange={e => setMover(e.target.value)}>{["All", "Top Gainers", "Top Losers"].map(s => <option key={s}>{s}</option>)}</select><select value={range} onChange={e => setRange(e.target.value)}>{["All", "Under 500", "500-2000", "2000+"].map(s => <option key={s}>{s}</option>)}</select></div><StockTable {...props} stocks={list} /></Panel></>;
 }
 function Portfolio(props) { return <><PageTitle title="Portfolio" subtitle="Track holdings, allocation, daily movement and performance." action={<span className="score">Score {Math.max(0, Math.min(100, Math.round(55 + props.summary.pnlPct * 4 + props.holdings.length * 3)))}/100</span>} /><div className="stats-grid"><Stat label="Investment" value={rupee(props.summary.invested)} sub="Total deployed" /><Stat label="Current Value" value={rupee(props.summary.value)} sub="Live value" /><Stat label="Profit / Loss" value={rupee(props.summary.pnl)} sub={pct(props.summary.pnlPct)} tone={props.summary.pnl >= 0 ? "up" : "down"} /><Stat label="Daily Tracker" value={rupee(props.summary.today)} sub="Open to now" tone={props.summary.today >= 0 ? "up" : "down"} /></div><Panel title="Holdings"><HoldingsTable holdings={props.holdings} setDrawer={props.setDrawer} /></Panel></>; }
 function Orders({ orders }) { const exportCsv = () => { const rows = [["Type", "Stock", "Date", "Time", "Price", "Qty", "Status"], ...orders.map(o => [o.side, o.symbol, o.date, o.time, o.price, o.qty, o.status])]; const blob = new Blob([rows.map(r => r.join(",")).join("\n")], { type: "text/csv" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "pay-flow-orders.csv"; a.click(); }; return <><PageTitle title="Orders" subtitle="Executed and pending demo trades, newest first." action={<button className="secondary" onClick={exportCsv}><i className="bi bi-download" /> Export CSV</button>} /><Panel><OrdersTable orders={orders} /></Panel></>; }
