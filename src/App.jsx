@@ -52,19 +52,17 @@ function createStocks() {
 }
 
 function getMarketStatus(now = new Date()) {
-  const open = new Date(now); open.setHours(9, 15, 0, 0);
-  const close = new Date(now); close.setHours(15, 30, 0, 0);
-  const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
-  const isOpen = isWeekday && now >= open && now <= close;
+  const open = new Date(now); open.setHours(6, 0, 0, 0);
+  const close = new Date(now); close.setHours(23, 0, 0, 0);
+  const isOpen = now >= open && now <= close;
   const target = isOpen ? close : nextOpen(now);
   const seconds = Math.max(0, Math.floor((target - now) / 1000));
   const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
   return { isOpen, label: isOpen ? "Market Open" : "Market Closed", clock: `${h}h ${m}m ${s}s` };
 }
 function nextOpen(now) {
-  const next = new Date(now); next.setHours(9, 15, 0, 0);
-  if (now >= next || now.getDay() === 0 || now.getDay() === 6) next.setDate(next.getDate() + 1);
-  while (next.getDay() === 0 || next.getDay() === 6) next.setDate(next.getDate() + 1);
+  const next = new Date(now); next.setHours(6, 0, 0, 0);
+  if (now >= next) next.setDate(next.getDate() + 1);
   return next;
 }
 function moveStock(stock) {
